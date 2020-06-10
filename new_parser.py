@@ -43,10 +43,13 @@ def visualize_data(video_name, gop, axis):
     for algo in colouring_algorithms:
         data_subset.append(video_data[algo][gop])
     stacked = stack(data_subset, 2)
-    psnr = stacked[2, :, :]
     bitrate = stacked[1, :, :]
+    psnr = stacked[2, :, :]
+    orig_bitrate = stacked[3, :, 0]
+    orig_psnr = stacked[4, :, 0]
     for idx, algo in enumerate(colouring_algorithms):
         axis.plot(bitrate[:, idx], psnr[:, idx], label=labels[idx])
+    axis.plot(orig_bitrate, orig_psnr, label='Intra')
     plt.legend()
 
 
