@@ -1,5 +1,6 @@
 from glob import glob
 from matplotlib import pyplot as plt
+from matplotlib import gridspec
 from os.path import basename
 from numpy import array, stack
 import sys
@@ -37,7 +38,6 @@ def construct_data_set():
 
 
 def visualize_data(video_name, gop, axis):
-    print(video_name, gop)
     video_data = data[video_name]
     data_subset = []
     for algo in colouring_algorithms:
@@ -48,10 +48,11 @@ def visualize_data(video_name, gop, axis):
     orig_bitrate = stacked[3, :, 0]
     orig_psnr = stacked[4, :, 0]
     for idx, algo in enumerate(colouring_algorithms):
-        axis.plot(bitrate[:, idx], psnr[:, idx], label=labels[idx])
+        axis.plot(bitrate[:, idx], psnr[:, idx],
+                  label=labels[idx], marker=markers[idx])
     axis.plot(orig_bitrate, orig_psnr, label='Intra')
     axis.plot(bitrate[:, 0], orig_psnr, label='Theoretical Max')
-    plt.legend()
+    axis.set_title('GOP={}'.format(gop))
 
 
 if __name__ == '__main__':
@@ -61,6 +62,7 @@ if __name__ == '__main__':
     input_dir = sys.argv[1]
     colouring_algorithms = ['hasan', 'proposed', 'discover']
     labels = ['Hasan', 'MCR', 'MCI']
+    markers = ['X', 'o', 'D']
     files = {}
     videos = []
     gops = [2, 4, 8, 16]
@@ -73,8 +75,16 @@ if __name__ == '__main__':
     data = construct_data_set()
 
     for video in videos:
-        fig, axes = plt.subplots(1, len(gops) - 1)
-        fig.subplots_adjust(wspace=0)
+        fig  = plt.figure(figsize=(15,7))
+        gs1 = gridspec.GridSpec(1, len(gops)-1)
+        gs1.update(wspace=0.1)
         for idx, gop in enumerate(gops[1:]):
-            visualize_data(video, gop, axes[idx])
+            axes = plt.subplot(gs1[idx])
+            visualize_data(video, gop, axes)
+            if idx == 0:
+                axes.set_ylabel("Average PSNR")
+            elif idx == 1:
+                axes.set_xlabel("Average kB / frame")
+            elif idx == 2:
+                axes.legend(loc='lower right')
         plt.show()
