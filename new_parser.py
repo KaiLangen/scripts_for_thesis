@@ -50,6 +50,7 @@ def visualize_data(video_name, gop, axis):
     for idx, algo in enumerate(colouring_algorithms):
         axis.plot(bitrate[:, idx], psnr[:, idx], label=labels[idx])
     axis.plot(orig_bitrate, orig_psnr, label='Intra')
+    axis.plot(bitrate[:, 0], orig_psnr, label='Theoretical Max')
     plt.legend()
 
 
@@ -73,6 +74,7 @@ if __name__ == '__main__':
 
     for video in videos:
         fig, axes = plt.subplots(1, len(gops) - 1)
+        fig.subplots_adjust(wspace=0)
         for idx, gop in enumerate(gops[1:]):
             visualize_data(video, gop, axes[idx])
         plt.show()
