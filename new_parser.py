@@ -43,10 +43,15 @@ def visualize_data(video_name, gop, axis):
     for algo in colouring_algorithms:
         data_subset.append(video_data[algo][gop])
     stacked = stack(data_subset, 2)
-    bitrate = stacked[1, :, :]
+    bitrate = stacked[1, :, :] / 1000
     psnr = stacked[2, :, :]
-    orig_bitrate = stacked[3, :, 0]
+    orig_bitrate = stacked[3, :, 0] / 1000
     orig_psnr = stacked[4, :, 0]
+    print("")
+    print("")
+    print(video_name, gop)
+    print("bitrate", orig_bitrate, bitrate)
+    print("psnr", orig_psnr, psnr)
     for idx, algo in enumerate(colouring_algorithms):
         axis.plot(bitrate[:, idx], psnr[:, idx],
                   label=labels[idx], marker=markers[idx])
@@ -84,7 +89,7 @@ if __name__ == '__main__':
             if idx == 0:
                 axes.set_ylabel("Average PSNR")
             elif idx == 1:
-                axes.set_xlabel("Average kB / frame")
+                axes.set_xlabel("Average mB / frame")
             elif idx == 2:
                 axes.legend(loc='lower right')
         plt.show()
