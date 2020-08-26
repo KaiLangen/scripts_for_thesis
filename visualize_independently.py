@@ -112,7 +112,7 @@ if __name__ == '__main__':
     data = construct_data_set()
 
     for video in videos:
-        for idx, gop in enumerate(gops[1:]):
+        for idx, gop in enumerate(gops):
             plt.figure()
             visualize_data(video, gop)
             plt.ylabel("Average PSNR")
