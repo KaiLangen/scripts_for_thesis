@@ -1,20 +1,11 @@
 from glob import glob
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
-from os.path import basename
+from os.path import basename, splitext
 from numpy import array, stack, arange
 import sys
 import matplotlib 
 
-fontsize = 18
-linewidth = 3
-markersize = 12
-font = {'weight' : 'bold',
-        'size'   : fontsize}
-
-matplotlib.rc('xtick', labelsize=fontsize)
-matplotlib.rc('ytick', labelsize=fontsize)
-matplotlib.rc('font', **font)
 
 def parse_data_from_filedump(file_dump):
     file_data = {}
@@ -33,9 +24,13 @@ def parse_data_from_filedump(file_dump):
 
 
 
-def get_video_from_filename(filename):
-    basefile = basename(file_name)
-    return '.'.join(basefile.split('.')[:-2])
+def get_video_from_filename(filename, colouring_algorithms):
+    video_name = basename(file_name)
+    video_name = splitext(video_name)[0]
+    for algo in colouring_algorithms:
+        video_name = video_name.replace(algo, '')
+    video_name = video_name[:-1]
+    return video_name
 
 
 def construct_data_set():
@@ -60,25 +55,10 @@ def visualize_data(video_name, gop):
     orig_bitrate = stacked[3, :, 0] / 1000
     orig_psnr = stacked[4, :, 0]
 
-    print("")
-    print("")
-    print(video_name, gop)
-    print("bitrate", orig_bitrate, bitrate)
-    print("psnr", orig_psnr, psnr)
-    plt.plot(
-        orig_bitrate,
-        orig_psnr,
-        label='Intra',
-        marker=markers[-2],
-        fillstyle='none',
-            linewidth=linewidth,
-        markersize=markersize)
     plt.plot(bitrate[:, 0],
             orig_psnr,
             label='Theoretical Max',
-            marker=markers[-1],
-            linewidth=linewidth,
-            markersize=markersize)
+            marker=markers[-1])
     plt.title('GOP={}'.format(gop))
     for idx, algo in enumerate(colouring_algorithms):
         plt.plot(
@@ -86,9 +66,13 @@ def visualize_data(video_name, gop):
             psnr[:, idx],
             label=labels[idx],
             marker=markers[idx],
-            linestyle=line_style[idx],
-            linewidth=linewidth,
-            markersize=markersize)
+            linestyle=line_style[idx])
+    plt.plot(
+        orig_bitrate,
+        orig_psnr,
+        label='Intra',
+        marker=markers[0],
+        fillstyle='none')
 
 
 if __name__ == '__main__':
@@ -96,10 +80,10 @@ if __name__ == '__main__':
         print("usage python new_parse.py dir")
         sys.exit(1)
     input_dir = sys.argv[1]
-    colouring_algorithms = ['hasan', 'discover', 'proposed']
-    labels = ['Hasan', 'MCI', 'MCR']
-    markers = ['X', 'D', 'v', 's', 'P']
-    line_style = ['--', '-.', ':']
+    colouring_algorithms = ['hasan', 'discover', 'proposed', 'mcr.fast']
+    labels = ['Hasan', 'MCI', 'MCR', 'MCR Fast']
+    markers = ['X', 'D', 'v', 's', 'P', 'o']
+    line_style = ['-', '-.', ':', '--']
     files = {}
     videos = []
     gops = [2, 4, 8, 16]
@@ -107,7 +91,7 @@ if __name__ == '__main__':
         files[algo] = glob('{}/*{}.dat'.format(input_dir, algo))
 
     for file_name in files[algo]:
-        videos.append(get_video_from_filename(file_name))
+        videos.append(get_video_from_filename(file_name, colouring_algorithms))
 
     data = construct_data_set()
 
@@ -118,4 +102,6 @@ if __name__ == '__main__':
             plt.ylabel("Average PSNR")
             plt.xlabel("Average mB / s")
             plt.legend(loc='lower right')
-            plt.savefig('{}_{}.png'.format(video, gop))
+            new_graph = '{}_gop{}.png'.format(video, gop)
+            print(new_graph)
+            plt.savefig(new_graph)
