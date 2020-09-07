@@ -13,7 +13,7 @@ rsa_keys=/student/kjl408/.ssh/id_test
 
 # decoding can be done in parallel,
 # since all files have been renamed to something unique
-script=$myPwd/proposed_dec_helper.bash
+script=$myPwd/mcr_fast_dec_helper.bash
 for gopLevel in {1..4}
 do
   for i in {1..7}

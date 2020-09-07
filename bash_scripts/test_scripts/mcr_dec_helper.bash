@@ -33,7 +33,6 @@ echo "SearchWindowSize=11" >> $configFile
 echo "BlockSize=8" >> $configFile
 echo "NumRefFrames=2" >> $configFile
 echo "SpatialSmoothing=5" >> $configFile
-echo "SearchMethod=0" >> $configFile
 
 (time ./decoder $configFile $vid > $out/dec_$1_$2.log) 2> $out/dec_time_$1_$2.log
 rm $configFile
