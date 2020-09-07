@@ -17,19 +17,25 @@ def parseChromaStats(filename, key):
         m = re.search('(?<={} )[0-9.]+'.format(key), line)
         if m:
             psnr.append(float(m.group(0)))
-
     return frameOrder, psnr
+
+
+def parse_seconds_from_linux_real_time(decoding_time):
+    decoding_time = decoding_time.lstrip('\s')
+    time = [float(x) for x in decoding_time.split('m')]
+    return time[0]*60.0 + time[1]
+
 
 def parseDecTime(filename):
     with open(filename, 'r') as f:
         lines = f.readlines()
+    decoding_times = []
     for line in lines:
         m = re.search('(?<=real)\s+\d+m\d+\.\d+', line)
         if m:
-            m = m.group(0).lstrip('\s')
-            time = [float(x) for x in m.split('m')]
-            return time[0]*60.0 + time[1]
-    return None
+            decoding_times.append(
+                parse_seconds_from_linux_real_time(m.group(0)))
+    return sum(decoding_times)
 
 
 def parseIntraStats(filename):
@@ -136,7 +142,7 @@ if __name__ == '__main__':
         luma_kbps, luma_psnr, orig_kbps, orig_psnr, _ = parseIntraStats(oracleFile)
         decTime = parseDecTime(timeFile)
 
-        if codecType == "proposed":
+        if codecType == "proposed" or codecType == "mcr_fast":
             frameOrder,ChromaPsnrU = parseChromaStats(wzFile,"PSNR Recoloured Chroma \(U\):")
             frameOrder,ChromaPsnrV = parseChromaStats(wzFile,"PSNR Recoloured Chroma \(V\):")
         elif codecType == "discover":
@@ -160,7 +166,7 @@ if __name__ == '__main__':
         rate.append(luma_kbps + key_chroma_kbps*nKeys/nFrames)
 	weightedChromaPsnr = (chromaPsnr*nChromaFrames + key_chroma_psnr*nKeys) / nFrames
 	psnr.append((6*luma_psnr + 2*weightedChromaPsnr)/8)
-        print("{},{},{},{},{},{},{}".format(gop, keyQP[qpLevel], 
+        print("{},{},{},{},{},{},{},{}".format(gop, keyQP[qpLevel], 
                                          rate[-1], psnr[-1],
-                                         orig_kbps, orig_psnr, decTime))
+                                         orig_kbps, orig_psnr, decTime, nChromaFrames))
    

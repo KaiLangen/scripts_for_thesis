@@ -1,9 +1,9 @@
 #!/bin/bash
-cd /discus/kai/recolouring_analysis/acc/
+cd /discus/kai/recolouring_analysis/bash_scripts/acc/
 vidName=$1
 qpLevel=$2
 
-codecNames=(discover proposed hasan)
+codecNames=(discover proposed hasan mcr_fast)
 dataDir=~/dvc_test/data/$vidName
 
 for codec in "${codecNames[@]}"
