@@ -2,4 +2,5 @@
 *.png
 *.dat
 data/
+bash_scripts/acc/data/
 images*/*
