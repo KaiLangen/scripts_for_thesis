@@ -52,12 +52,12 @@ def visualize_data(videos, lumas, chromas, others):
     luma_avg, luma_err = get_stats(lumas)
     chroma_avg, chroma_err = get_stats(chromas)
     other_avg, other_err = get_stats(others)
-    p1 = plt.bar(ind, luma_avg, width=width, yerr=luma_err)
+    p1 = plt.bar(ind, other_avg, width=width, bottom=luma_avg+chroma_avg, yerr=other_err)
     p2 = plt.bar(ind, chroma_avg, width=width, bottom=luma_avg, yerr=chroma_err)
-    p3 = plt.bar(ind, other_avg, width=width, bottom=luma_avg+chroma_avg, yerr=other_err)
-    plt.legend((p1, p2, p3), ('Luma', 'Chroma', 'Other'), loc='lower right')
+    p3 = plt.bar(ind, luma_avg, width=width, yerr=luma_err)
+    plt.legend((p1, p2, p3), ('Other', 'Chroma', 'Luma'), loc='lower right')
     plt.xticks(ind, videos)
-    plt.show()
+    plt.savefig("bitrate_breakdown.png")
 
 
 def parse_vid_names_from_filenames(filename):
