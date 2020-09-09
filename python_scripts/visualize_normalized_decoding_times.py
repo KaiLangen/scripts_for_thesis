@@ -2,20 +2,19 @@ from glob import glob
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 from os.path import basename, splitext
-from numpy import array, stack, arange, std
+from numpy import array, stack, arange, std, mean
 import sys
 import matplotlib 
 
-
-fontsize = 18
-linewidth = 3
-markersize = 12
-font = {'weight' : 'bold',
-        'size'   : fontsize}
-
-matplotlib.rc('xtick', labelsize=fontsize)
-matplotlib.rc('ytick', labelsize=fontsize)
-matplotlib.rc('font', **font)
+def autolabel(ax, rects):
+    """
+    Attach a text label above each bar displaying its height
+    """
+    for rect in rects:
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width()/2., 1.05*height,
+                '%d' % int(height),
+                ha='center', va='bottom')
 
 def parse_data_from_filedump(file_dump):
     file_data = {}
@@ -56,9 +55,8 @@ def construct_data_set():
 
 def visualize_data(videos, gops):
     group_size = len(colouring_algorithms)
-    plt.figure()
-    all_decoding_times = []
-    for algo in colouring_algorithms:
+    fig, ax = plt.subplots()
+    for idx, algo in enumerate(colouring_algorithms):
         normalized_decoding_times = []
         for gop in gops:
             for video_name in videos:
@@ -67,23 +65,20 @@ def visualize_data(videos, gops):
                 decoding_times_per_frame_ms = total_decoding_times / recoloured_frames * 1000
                 normalized_decoding_times.extend(decoding_times_per_frame_ms)
         error = std(normalized_decoding_times)
-        all_decoding_times.append(normalized_decoding_times)
-
-    print([len(x) for x in all_decoding_times])
-    plt.boxplot(all_decoding_times, labels=labels)
-    plt.xlabel("Recolouring Algorithm")
-    plt.ylabel("Decoding time (ms / Frame)")
-#    plt.xticks([x for x in x_pos)], labels)
-    plt.legend()
-    plt.show()
+        bar = ax.bar(idx, mean(normalized_decoding_times), yerr=error)
+        autolabel(ax, bar)
+    ax.set_xlabel("Recolouring Algorithm")
+    ax.set_ylabel("Decoding time (ms / Frame)")
+    ax.set_ylim(0, 1200)
+    plt.xticks(range(len(labels)), labels)
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         sys.exit(1)
     input_dir = sys.argv[1]
-    colouring_algorithms = ['hasan', 'discover', 'proposed', 'mcr.fast']
-    labels = ['Hasan', 'MCI', 'MCR', 'MCR Fast']
+    colouring_algorithms = ['hasan', 'discover', 'proposed']#, 'mcr.fast']
+    labels = ['Hasan', 'MCI', 'MCR']#, 'MCR Fast']
     markers = ['X', 'D', 'v', 's', 'P', 'o']
     line_style = ['-', '-.', ':', '--']
     files = {}
@@ -98,5 +93,5 @@ if __name__ == '__main__':
     data = construct_data_set()
 
     visualize_data(videos, gops)
-        #new_graph = '{}_gop{}.png'.format(video, gop)
-        #plt.savefig(new_graph)
+    new_graph = 'decoding_times.png'
+    plt.savefig(new_graph)
