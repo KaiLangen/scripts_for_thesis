@@ -2,10 +2,19 @@ from glob import glob
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 from os.path import basename, splitext
-from numpy import array, stack, arange
+from numpy import array, stack, arange, std, mean
 import sys
 import matplotlib 
 
+def autolabel(ax, rects):
+    """
+    Attach a text label above each bar displaying its height
+    """
+    for rect in rects:
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width()/2., 1.05*height,
+                '%d' % int(height),
+                ha='center', va='bottom')
 
 def parse_data_from_filedump(file_dump):
     file_data = {}
@@ -44,64 +53,45 @@ def construct_data_set():
     return data
 
 
-def visualize_data(video_name, gop):
-    video_data = data[video_name]
-    data_subset = []
-    for algo in colouring_algorithms:
-        data_subset.append(video_data[algo][gop])
-    stacked = stack(data_subset, 2)
-    bitrate = stacked[1, :, :] / 1000
-    psnr = stacked[2, :, :]
-    orig_bitrate = stacked[3, :, 0] / 1000
-    orig_psnr = stacked[4, :, 0]
-
-    plt.plot(bitrate[:, 0],
-            orig_psnr,
-            label='Theoretical Max',
-            marker=markers[-1])
-    plt.title('GOP={}'.format(gop))
+def visualize_data(videos, gops):
+    group_size = len(colouring_algorithms)
+    fig, ax = plt.subplots()
     for idx, algo in enumerate(colouring_algorithms):
-        plt.plot(
-            bitrate[:, idx],
-            psnr[:, idx],
-            label=labels[idx],
-            marker=markers[idx],
-            linestyle=line_style[idx])
-    plt.plot(
-        orig_bitrate,
-        orig_psnr,
-        label='Intra',
-        marker=markers[0],
-        fillstyle='none')
+        normalized_decoding_times = []
+        for gop in gops:
+            for video_name in videos:
+                total_decoding_times = data[video_name][algo][gop][5, :]
+                recoloured_frames = data[video_name][algo][gop][6, :]
+                decoding_times_per_frame_ms = total_decoding_times / recoloured_frames * 1000
+                normalized_decoding_times.extend(decoding_times_per_frame_ms)
+        error = std(normalized_decoding_times)
+        bar = ax.bar(idx, mean(normalized_decoding_times), yerr=error)
+        autolabel(ax, bar)
+    ax.set_xlabel("Recolouring Algorithm")
+    ax.set_ylabel("Decoding time (ms / Frame)")
+    ax.set_ylim(0, 1200)
+    plt.xticks(range(len(labels)), labels)
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("usage python new_parse.py dir")
         sys.exit(1)
     input_dir = sys.argv[1]
-    colouring_algorithms = ['hasan', 'discover', 'proposed', 'mcr.fast']
-    labels = ['Hasan', 'MCI', 'MCR', 'MCR Fast']
+    colouring_algorithms = ['hasan', 'discover', 'proposed']#, 'mcr.fast']
+    labels = ['Hasan', 'MCI', 'MCR']#, 'MCR Fast']
     markers = ['X', 'D', 'v', 's', 'P', 'o']
     line_style = ['-', '-.', ':', '--']
     files = {}
     videos = []
     gops = [2, 4, 8, 16]
     for algo in colouring_algorithms:
-        files[algo] = glob('{}/*{}.dat'.format(input_dir, algo))
+        files[algo] = glob('{}/*.{}.dat'.format(input_dir, algo))
 
     for file_name in files[algo]:
         videos.append(get_video_from_filename(file_name, colouring_algorithms))
 
     data = construct_data_set()
 
-    for video in videos:
-        for idx, gop in enumerate(gops):
-            plt.figure()
-            visualize_data(video, gop)
-            plt.ylabel("Average PSNR")
-            plt.xlabel("Average mB / s")
-            plt.legend(loc='lower right')
-            new_graph = '{}_gop{}.png'.format(video, gop)
-            print(new_graph)
-            plt.savefig(new_graph)
+    visualize_data(videos, gops)
+    new_graph = 'decoding_times.png'
+    plt.savefig(new_graph)

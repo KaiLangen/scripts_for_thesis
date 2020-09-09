@@ -2,7 +2,7 @@ from glob import glob
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 from os.path import basename, splitext
-from numpy import array, stack, arange
+from numpy import array, stack, arange, std
 import sys
 import matplotlib 
 
@@ -44,40 +44,31 @@ def construct_data_set():
     return data
 
 
-def visualize_data(video_name, gop):
-    video_data = data[video_name]
-    data_subset = []
-    for algo in colouring_algorithms:
-        data_subset.append(video_data[algo][gop])
-    stacked = stack(data_subset, 2)
-    bitrate = stacked[1, :, :] / 1000
-    psnr = stacked[2, :, :]
-    orig_bitrate = stacked[3, :, 0] / 1000
-    orig_psnr = stacked[4, :, 0]
-
-    plt.plot(bitrate[:, 0],
-            orig_psnr,
-            label='Theoretical Max',
-            marker=markers[-1])
-    plt.title('GOP={}'.format(gop))
-    for idx, algo in enumerate(colouring_algorithms):
-        plt.plot(
-            bitrate[:, idx],
-            psnr[:, idx],
-            label=labels[idx],
-            marker=markers[idx],
-            linestyle=line_style[idx])
-    plt.plot(
-        orig_bitrate,
-        orig_psnr,
-        label='Intra',
-        marker=markers[0],
-        fillstyle='none')
+def visualize_data(videos, gops):
+    group_size = len(colouring_algorithms)
+    plt.figure()
+    for grouping, algo in enumerate(colouring_algorithms):
+        for idx, gop in enumerate(gops):
+            decoding_times = []
+            for video_name in videos:
+                decoding_times.extend(data[video_name][algo][gop][5, :])
+            error = std(decoding_times)
+            x_pos = grouping*(len(gops) + 1) + idx
+            plt.bar(
+                x_pos,
+                decoding_times,
+                yerr=error,
+                align='center',
+                label="GOP {}".format(gop))
+    plt.xlabel("Recolouring Algorithm")
+    plt.ylabel("Decoding time (seconds)")
+#    plt.xticks([x for x in x_pos)], labels)
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("usage python new_parse.py dir")
         sys.exit(1)
     input_dir = sys.argv[1]
     colouring_algorithms = ['hasan', 'discover', 'proposed', 'mcr.fast']
@@ -88,20 +79,13 @@ if __name__ == '__main__':
     videos = []
     gops = [2, 4, 8, 16]
     for algo in colouring_algorithms:
-        files[algo] = glob('{}/*{}.dat'.format(input_dir, algo))
+        files[algo] = glob('{}/*.{}.dat'.format(input_dir, algo))
 
     for file_name in files[algo]:
         videos.append(get_video_from_filename(file_name, colouring_algorithms))
 
     data = construct_data_set()
 
-    for video in videos:
-        for idx, gop in enumerate(gops):
-            plt.figure()
-            visualize_data(video, gop)
-            plt.ylabel("Average PSNR")
-            plt.xlabel("Average mB / s")
-            plt.legend(loc='lower right')
-            new_graph = '{}_gop{}.png'.format(video, gop)
-            print(new_graph)
-            plt.savefig(new_graph)
+    visualize_data(videos, gops)
+        #new_graph = '{}_gop{}.png'.format(video, gop)
+        #plt.savefig(new_graph)
