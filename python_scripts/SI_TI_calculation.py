@@ -48,7 +48,6 @@ def calculate_ti(frame_data, previous_frame_data):
 
 def si_ti_calculation(filename, width, height):
     frame_size = width * height
-    bit_max = 255
     si_values = []
     ti_values = [0.0]
     previous_frame_data = None
@@ -58,7 +57,7 @@ def si_ti_calculation(filename, width, height):
         chroma = f.read(frame_size // 2)
         while len(luma) > 0:
             frame_data = np.frombuffer(luma, dtype=np.uint8)
-            frame_data = (frame_data.astype(np.float64) / bit_max).reshape(height, width)
+            frame_data = (frame_data.astype(np.float64)).reshape(height, width)
             si_values.append(calculate_si(frame_data))
             if previous_frame_data is not None:
                 ti_values.append(calculate_ti(frame_data, previous_frame_data))
@@ -82,5 +81,5 @@ if __name__ == '__main__':
 
     outfile = splitext(basename(filename))[0] + ".txt"
     with open(outfile, "w") as f:
-        f.write("max_si: {}".format(round(np.max(si), 3)))
-        f.write("max_ti: {}".format(round(np.max(ti), 3)))
+        f.write("max_si: {}\n".format(round(np.max(si), 3)))
+        f.write("max_ti: {}\n".format(round(np.max(ti), 3)))
