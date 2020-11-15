@@ -4,6 +4,7 @@ from matplotlib import gridspec
 from os.path import basename, splitext
 from numpy import array, stack, arange, std
 import sys
+from adjustText import adjust_text
 import matplotlib
 
 
@@ -21,21 +22,34 @@ def get_int_from_line(line, token=":"):
 def parse_si_ti(filename):
     with open(filename, 'r') as f:
         lines = f.readlines()
-    si = get_int_from_line(filter(lambda l: "si" in l, lines)[0])
-    ti = get_int_from_line(filter(lambda l: "ti" in l, lines)[0])
-    return si, ti
+    si_Y = get_int_from_line(list(filter(lambda l: "si_Y" in l, lines))[0])
+    si_U = get_int_from_line(list(filter(lambda l: "si_U" in l, lines))[0])
+    si_V = get_int_from_line(list(filter(lambda l: "si_V" in l, lines))[0])
+    ti = get_int_from_line(list(filter(lambda l: "ti" in l, lines))[0])
+    return si_Y, si_U, si_V, ti
 
 
-def visualize_data(videos, sis, tis):
+def visualize_siti(videos, sis, tis):
     fig, ax = plt.subplots()
     ax.scatter(sis, tis)
 
-    for i, txt in enumerate(videos):
-            ax.annotate(txt, (sis[i], tis[i]))
+    labels = [plt.text(sis[i], tis[i], videos[i], ha='center', va='center') for i in range(len(videos))]
+    adjust_text(labels)
     plt.xlabel("Spatial Information (SI)")
     plt.ylabel("Temporal Information (TI)")
     plt.savefig("videos_si_ti.png")
 
+def visualize_si_yuv(videos, sisY, sisU, sisV):
+    fig, ax = plt.subplots()
+    ax.scatter(sisY, sisU)
+    ax.scatter(sisY, sisV)
+
+    labels = [plt.text(sisY[i], sisU[i], videos[i], ha='center', va='center') for i in range(len(videos))]
+    labels = [plt.text(sisY[i], sisV[i], videos[i], ha='center', va='center') for i in range(len(videos))]
+    adjust_text(labels)
+    plt.xlabel("Luma Spatial Information")
+    plt.ylabel("Chroma Spatial Information")
+    plt.savefig("videos_si_yuv.png")
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
@@ -44,14 +58,19 @@ if __name__ == '__main__':
     input_dir = sys.argv[1]
     files = []
     videos = []
-    sis = []
+    sisY = []
+    sisU = []
+    sisV = []
     tis = []
     gops = [2, 4, 8, 16]
     files = glob('{}/*'.format(input_dir))
 
     for file_name in files:
         videos.append(get_video_from_filename(file_name))
-        si, ti = parse_si_ti(file_name)
-        sis.append(si)
+        si_Y, si_U, si_V, ti = parse_si_ti(file_name)
+        sisY.append(si_Y)
+        sisU.append(si_U)
+        sisV.append(si_V)
         tis.append(ti)
-    visualize_data(videos, sis, tis)
+    visualize_siti(videos, sisY, tis)
+    visualize_si_yuv(videos, sisY, sisU, sisV)
