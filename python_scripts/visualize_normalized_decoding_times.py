@@ -77,8 +77,8 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         sys.exit(1)
     input_dir = sys.argv[1]
-    colouring_algorithms = ['hasan', 'discover', 'proposed']#, 'mcr.fast']
-    labels = ['Hasan', 'MCI', 'MCR']#, 'MCR Fast']
+    colouring_algorithms = ['hasan', 'discover', 'proposed', 'mcr.fast']
+    labels = ['Hasan', 'MCI', 'MCR', 'MCR Fast']
     markers = ['X', 'D', 'v', 's', 'P', 'o']
     line_style = ['-', '-.', ':', '--']
     files = {}

@@ -2,48 +2,12 @@ from glob import glob
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 from os.path import basename, splitext
-from numpy import array, stack, arange, std, mean
+from numpy import arange
 import sys
-import matplotlib
+import matplotlib.ticker as mtick
 
+from lib.bitrate_utils import *
 
-def parse_data_from_filedump(file_contents):
-    file_data = {}
-    for line in file_contents:
-        if ":" in line:
-            key, value =  line.strip().split(":")
-            if key not in file_data:
-                file_data[key] = []
-            file_data[key].append(float(value))
-    return file_data
-
-
-def construct_data_set(files, video_names):
-    data = {}
-    for idx, file_name in enumerate(files):
-        video = video_names[idx]
-        with open(file_name, 'r') as f:
-            data[video] = parse_data_from_filedump(f.readlines())
-    return data
-
-
-def get_stats(value):
-    return value.mean(1), value.std(1)
-
-
-def restructure_data(data, videos):
-    lumas = []
-    chromas = []
-    others = []
-    for video in videos:
-        total = array(data[video]["average"])
-        luma = array(data[video]["Coeffs. Y"]) / total
-        chroma = array(data[video]["Coeffs. C"]) / total
-        other = 1 - chroma - luma
-        lumas.append(luma)
-        chromas.append(chroma)
-        others.append(other)
-    return array(lumas), array(chromas), array(others)
 
 
 def visualize_data(videos, lumas, chromas, others):
@@ -52,23 +16,45 @@ def visualize_data(videos, lumas, chromas, others):
     luma_avg, luma_err = get_stats(lumas)
     chroma_avg, chroma_err = get_stats(chromas)
     other_avg, other_err = get_stats(others)
-    p1 = plt.bar(ind, other_avg, width=width, bottom=luma_avg+chroma_avg, yerr=other_err)
-    p2 = plt.bar(ind, chroma_avg, width=width, bottom=luma_avg, yerr=chroma_err)
-    p3 = plt.bar(ind, luma_avg, width=width, yerr=luma_err)
+    with open("bitrates.txt", "w") as f:
+        for i in range(len(videos)):
+            f.write("{}: {}\n".format(videos[i], chroma_avg[i]))
+    fig, ax = plt.subplots()
+    p1 = ax.bar(
+        ind,
+        other_avg,
+       width=width,
+        bottom=luma_avg+chroma_avg,
+        yerr=other_err,
+        color="#FEDAA7")
+#        hatch="\\")
+    p2 = ax.bar(ind,
+        chroma_avg,
+        width=width,
+        bottom=luma_avg,
+        yerr=chroma_err,
+        color="#E85285")
+#        hatch="x")
+    p3 = ax.bar(ind,
+        luma_avg,
+        width=width,
+        yerr=luma_err,
+        color="#61169A")
+#        hatch=".")
+    ax.set_xlabel("Video Sequences")
+    ax.set_ylabel("Percentage of Encoded Video")
     plt.legend((p1, p2, p3), ('Other', 'Chroma', 'Luma'), loc='lower right')
     plt.xticks(ind, videos)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    plt.tight_layout()
     plt.savefig("bitrate_breakdown.png")
 
 
-def parse_vid_names_from_filenames(filename):
-    return ".".join(filename.split('.')[:-2])
-
-
-def replace_id_with_canola(videos):
-    for n, i in enumerate(videos):
-        if i == "1507.2016.1108.images8":
-            videos[n] = "canola"
-    return videos
+def wrap_vidname(video):
+    splitstring = video.split('.')
+    splitstring = ["%s %s" % (splitstring[2],splitstring[3]),
+            "%s/%s/%s" % (splitstring[0][:2], splitstring[0][2:],splitstring[1])]
+    return '\n'.join(splitstring)
 
 
 if __name__ == '__main__':
@@ -79,9 +65,9 @@ if __name__ == '__main__':
     input_dir = sys.argv[1]
     files = glob('{}/*.txt'.format(input_dir))
     fileNames = map(basename, files)
-    videoNames = map(parse_vid_names_from_filenames, fileNames)
-    videoNames = replace_id_with_canola(videoNames)
-    videoNames = map(lambda x: x.title(), videoNames)
+    videoNames = map(parse_vid_name_from_filename, fileNames)
+    videoNames = list(map(lambda x: x.title(), videoNames))
+#    videoNames = list(map(lambda v: wrap_vidname(v), videoNames))
     data = construct_data_set(files, videoNames)
     lumas, chromas, others = restructure_data(data, videoNames)
     visualize_data(videoNames, lumas, chromas, others)
