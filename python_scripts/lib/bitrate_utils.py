@@ -1,9 +1,20 @@
 from numpy import array, std, mean
 
 
+def parse_qp_from_filename(stats_filename):
+    file_without_ext = stats_filename.split(".")[0]
+    return file_without_ext.split("_")[1]
+
+
 def parse_data_from_filedump(file_contents):
     file_data = {}
     for line in file_contents:
+        if ".dat" in line:
+            stats_filename = line.split("/")[-1]
+            qp = parse_qp_from_filename(stats_filename)
+            if "qp" not in file_data:
+                file_data["qp"] = []
+            file_data["qp"].append(int(qp))
         if ":" in line:
             key, value =  line.strip().split(":")
             if key not in file_data:
@@ -29,6 +40,7 @@ def restructure_data(data, videos):
     lumas = []
     chromas = []
     others = []
+    qps = []
     for video in videos:
         total = array(data[video]["average"])
         luma = array(data[video]["Coeffs. Y"]) / total * 100
@@ -37,7 +49,8 @@ def restructure_data(data, videos):
         lumas.append(luma)
         chromas.append(chroma)
         others.append(other)
-    return array(lumas), array(chromas), array(others)
+        qps.append(array(data[video]["qp"]))
+    return array(lumas), array(chromas), array(others), array(qps)
 
 
 def parse_vid_name_from_filename(filename):
