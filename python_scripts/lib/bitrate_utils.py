@@ -3,7 +3,7 @@ from numpy import array, std, mean
 
 def parse_qp_from_filename(stats_filename):
     file_without_ext = stats_filename.split(".")[0]
-    return file_without_ext.split("_")[1]
+    return file_without_ext.split("_")[-1]
 
 
 def parse_data_from_filedump(file_contents):

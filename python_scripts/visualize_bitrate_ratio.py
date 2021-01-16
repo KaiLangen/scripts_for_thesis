@@ -69,5 +69,5 @@ if __name__ == '__main__':
     videoNames = list(map(lambda x: x.title(), videoNames))
 #    videoNames = list(map(lambda v: wrap_vidname(v), videoNames))
     data = construct_data_set(files, videoNames)
-    lumas, chromas, others = restructure_data(data, videoNames)
+    lumas, chromas, others, _= restructure_data(data, videoNames)
     visualize_data(videoNames, lumas, chromas, others)

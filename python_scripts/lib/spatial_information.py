@@ -1,4 +1,4 @@
-from si_ti_utils import parse_si_ti
+from lib.si_ti_utils import parse_si_ti
 
 class SpatialInformation:
     def __init__(self, file_name):
