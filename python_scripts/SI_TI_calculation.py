@@ -2,7 +2,6 @@ import numpy as np
 from scipy import ndimage
 import sys
 import json
-import cv2
 from os.path import basename, splitext
 
 
@@ -67,8 +66,6 @@ def si_ti_calculation(filename, width, height):
             luma_data = get_frame_from_array(luma, width, height)
             chroma_u_data = get_frame_from_array(chroma_u, width // 2, height // 2)
             chroma_v_data = get_frame_from_array(chroma_v, width // 2, height // 2)
-            cv2.imshow("Window", np.uint8(chroma_u_data))
-            cv2.imshow("Window", np.uint8(chroma_v_data))
             si_values.append(calculate_si(luma_data))
             # add calculations for Chroma spatial information 
             chroma_si_u.append(calculate_si(chroma_u_data))
