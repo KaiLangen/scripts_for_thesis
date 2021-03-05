@@ -12,9 +12,8 @@ FMT=$2
 frames=$3
 gopLevel=$4
 vid=$5
-dir=data/$6
-oracle=oracle_${keyQP}.yuv
-rec=rec_${keyQP}_${gopLevel}.yuv
+dir=nomo_data/$6
+rec=rec_nomo$gop.$keyQP.yuv
 if [ "$2" == "CIF" ]; then
   w=352
   h=288
@@ -28,38 +27,25 @@ echo `hostname`
 cd dvc_test/
 mkdir -p $dir
 cd jm
-if [[ gopLevel -eq 1 ]]
-then
-  echo "Encoding key frames with QP $keyQP"
-  ./lencod_64.exe -d encoder_intra_main.cfg \
-                  -p InputFile="$vid" \
-                  -p ReconFile="../$dir/$oracle" \
-                  -p QPISlice=$keyQP \
-                  -p SourceWidth=$w \
-                  -p SourceHeight=$h \
-                  -p FramesToBeEncoded=$frames > jm.log
-  mv stats.dat ../$dir/stats_${keyQP}.dat
-fi
-
 # encode the key-frame video
 gop=$((1<<gopLevel))
 echo "Encoding key frames with GOP $gop, QP $keyQP"
-./lencod_64.exe -d encoder_intra_main.cfg \
-                -p InputFile="$vid" \
-                -p ReconFile="../$dir/$rec" \
-                -p QPISlice=$keyQP \
-                -p FrameSkip=$(( gop-1 )) \
-                -p SourceWidth=$w \
-                -p SourceHeight=$h \
-                -p FramesToBeEncoded=$(( (frames + 1)/gop )) > jm.log
-mv stats.dat ../$dir/stats_${keyQP}_${gopLevel}.dat
+(time ./lencod_64.exe \
+        -d encoder_intra_main.cfg \
+        -p InputFile= "$vid" \
+        -p ReconFile= "../$dir/$rec" \
+        -p QPISlice=$keyQP \
+        -p QPPSlice=$keyQP \
+        -p SourceWidth=$w \
+        -p SourceHeight=$h \
+        -p IntraPeriod=$gop \
+        -p NumberReferenceFrames=1 \
+        -p DisableSubpelME=1 \
+        -p SearchRange=0 \
+        -p BiPredMotionEstimation=0 \
+        -p FramesToBeEncoded=$frames > jm.log) 2> "../$dir/nomo_${gop}_${keyQP}_time.log"
+mv stats.dat ../$dir/stats_nomo$gop.$keyQP.dat
 cd ..;
-
-#encode DISCOVER headers
-./enDVC 0 $keyQP $frames $gopLevel u $vid \
-	$dir/wz_u_${keyQP}_${gopLevel}.bin $dir/$rec > /dev/null
-./enDVC 0 $keyQP $frames $gopLevel v $vid \
-        $dir/wz_v_${keyQP}_${gopLevel}.bin $dir/$rec > /dev/null
 
 # generate configFile
 configFile=$dir/enc_config_${1}_${4}.cfg
