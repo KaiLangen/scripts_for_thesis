@@ -8,17 +8,16 @@ fi
 keyQP=$1
 gopLevel=$2
 vid=$3
-dir=data/$4
+dir=nomo_data/$4
 out=$dir/proposed
-out2=$dir/hasan
+gop=$((1<<gopLevel))
 oracle=$dir/oracle_${keyQP}.yuv
-rec=$dir/rec_${keyQP}_${gopLevel}.yuv
+rec=$dir/rec_nomo${gop}.${keyQP}.yuv
 wz=$dir/wz_${keyQP}_${gopLevel}.bin
 
 echo `hostname`
 cd dvc_test/
 mkdir -p $out
-mkdir -p $out2
 
 ##############################################################################
 # New proposed method
@@ -35,4 +34,4 @@ echo "NumRefFrames=2" >> $configFile
 echo "SpatialSmoothing=5" >> $configFile
 
 (time ./decoder $configFile $vid > $out/dec_$1_$2.log) 2> $out/dec_time_$1_$2.log
-rm $configFile
+#rm $configFile

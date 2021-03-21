@@ -12,6 +12,7 @@ myPwd=`pwd`
 
 rsa_keys=/student/kjl408/.ssh/id_test
 script=$myPwd/enc_helper.bash
+gopLevel=1
 for gopLevel in {1..4}
 do
   for i in {1..7}
